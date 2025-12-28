@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Node
+node_modules/
+.next/
+out/
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+voice_previews/
+temp_videos/
+*.mp3
+*.mp4
+*.wav
+
+# Logs
+*.log
+backend.log
+frontend.log
+
+# Build outputs
+*.pyc
+.next/
+out/
+dist/
