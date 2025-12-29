@@ -406,6 +406,8 @@ async def generate_avatar(
         "url": placeholder_url,
         "message": f"Generated mock avatar with style: {style}. Upload your own image for best results."
     })
+
+
 if __name__ == "__main__":
     import uvicorn
     print("🚀 Starting Antigravity AI Mock Backend...")
