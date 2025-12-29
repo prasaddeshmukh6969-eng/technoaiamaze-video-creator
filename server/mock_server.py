@@ -20,10 +20,40 @@ app = FastAPI(
     description="Simplified backend for testing"
 )
 
-# CORS
+# CORS Configuration - Allow multiple frontend origins
+# This supports local development, Vercel, Hostinger, and custom domains
+import os
+import re
+
+# Define allowed origins
+allowed_origins = [
+    "http://localhost:3000",                                    # Local development
+    "https://localhost:3000",                                   # Local HTTPS
+    "https://technoaiamaze-video-creator.vercel.app",          # Vercel main domain
+    "https://ai.technoamaze.in",                               # Hostinger custom domain
+    "https://technoamaze.in",                                  # Main domain
+]
+
+# Allow all Vercel preview deployments (e.g., technoaiamaze-video-creator-*.vercel.app)
+def check_origin(origin: str) -> bool:
+    """Check if origin is allowed"""
+    if origin in allowed_origins:
+        return True
+    
+    # Allow any Vercel deployment
+    if re.match(r"https://technoaiamaze-video-creator.*\.vercel\.app", origin):
+        return True
+    
+    # Allow any localhost port for development
+    if re.match(r"http://localhost:\d+", origin):
+        return True
+    
+    return False
+
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origin_regex=r"https://(technoaiamaze-video-creator.*\.vercel\.app|ai\.technoamaze\.in|technoamaze\.in)|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
