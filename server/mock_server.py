@@ -109,8 +109,7 @@ async def create_generation_job(
         "status": "pending",
         "progress": 0,
         "message": "Job queued...",
-        "created_at": time.time(),
-        "user_email": current_user['email']
+        "created_at": time.time()
     }
     
     # Start mock processing in background
@@ -125,6 +124,10 @@ async def create_generation_job(
 
 async def mock_process_job(job_id: str):
     """Simulate video generation process and create placeholder video"""
+    
+    # Ensure temp directory exists
+    import os
+    os.makedirs("/tmp/antigravity", exist_ok=True)
     
     # Simulate processing stages
     stages = [
