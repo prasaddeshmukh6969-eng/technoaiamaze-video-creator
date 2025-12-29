@@ -158,6 +158,12 @@ export default function Studio() {
             return;
         }
 
+        // Check authentication
+        if (!isAuthenticated || !token) {
+            setShowAuthModal(true);
+            return;
+        }
+
         try {
             setError(null);
             setIsGenerating(true);
@@ -175,7 +181,11 @@ export default function Studio() {
                 formData.append('language', outputLanguage);
             }
 
-            const response = await axios.post(`${API_URL}/api/v1/generate`, formData);
+            const response = await axios.post(`${API_URL}/api/v1/generate`, formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const { job_id } = response.data;
 
             setJobId(job_id);
