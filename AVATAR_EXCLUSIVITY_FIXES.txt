@@ -1,0 +1,37 @@
+// Code fixes for exclusive avatar selection
+
+// 1. Add state after line 40 (after imagePreview state)
+const [avatarSource, setAvatarSource] = useState<'upload' | 'generate' | null>(null);
+
+// 2. Update handleImageChange function (around line 116)
+const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        setImage(file);
+        setAvatarSource('upload'); // <-- ADD THIS LINE
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+// 3. Update handleAvatarGenerated function (around line 128)
+// ADD setAvatarSource('generate'); after setImagePreview(avatarUrl);
+setImage(file);
+setImagePreview(avatarUrl);
+setAvatarSource('generate'); // <-- ADD THIS LINE
+
+// 4. Pass disabled prop to AvatarSelector (in JSX, around line 300)
+<AvatarSelector
+    selectedAvatarId={'generate'}
+    onSelect={() => {}}
+    onGenerate={handleAvatarGenerated}
+    disabled={avatarSource === 'upload'} // <-- ADD THIS PROP
+/>
+
+// 5. Update file input section (around line 260) to show when disabled
+<div className={avatar Source === 'generate' ? 'opacity-50 pointer-events-none' : ''}>
+    {/* existing file upload code */}
+</div>
