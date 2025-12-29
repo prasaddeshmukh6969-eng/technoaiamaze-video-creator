@@ -152,7 +152,7 @@ async def mock_process_job(job_id: str):
     
     # Mark as completed
     jobs[job_id]["status"] = "completed"
-    jobs[job_id]["result_url"] = f"http://localhost:8000/api/v1/download/{job_id}"
+    # URL generated dynamically in status endpoint
     jobs[job_id]["message"] = "Video generation complete! (MOCK - Placeholder video created)"
 
 
@@ -271,7 +271,7 @@ def create_placeholder_video(job_id: str) -> Path:
 
 
 @app.get("/api/v1/status/{job_id}")
-async def get_job_status(job_id: str) -> JobStatus:
+async def get_job_status(job_id: str, request: Request) -> JobStatus:
     """Get job status"""
     
     if job_id not in jobs:
@@ -279,13 +279,7 @@ async def get_job_status(job_id: str) -> JobStatus:
     
     job_data = jobs[job_id]
     
-    return JobStatus(
-        job_id=job_id,
-        status=job_data["status"],
-        progress=job_data.get("progress"),
-        message=job_data.get("message"),
-        result_url=job_data.get("result_url")
-    )
+    result_url = None`r`n    if job_data["status"] == "completed":`r`n        base_url = str(request.base_url).rstrip("/")`.r`n        result_url = f"{base_url}/api/v1/download/{job_id}"`r`n    return JobStatus(`r`n        job_id=job_id,`r`n        status=job_data["status"],`r`n        progress=job_data.get("progress"),`r`n        message=job_data.get("message"),`r`n        result_url=result_url`r`n    )
 
 
 @app.get("/api/v1/download/{job_id}")
@@ -444,3 +438,6 @@ if __name__ == "__main__":
     print("📦 Install full dependencies for real video generation")
     print("")
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+
