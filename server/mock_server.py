@@ -2,7 +2,7 @@
 Antigravity AI - Simple Mock Backend
 Simplified version for testing without heavy AI dependencies
 """
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
