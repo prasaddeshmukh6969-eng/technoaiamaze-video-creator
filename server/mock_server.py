@@ -158,7 +158,7 @@ async def mock_process_job(job_id: str):
 
 def create_placeholder_video(job_id: str) -> Path:
     """Create a proper placeholder video file using PIL"""
-    output_dir = Path("temp_videos")
+    output_dir = Path("/tmp/antigravity")
     output_dir.mkdir(exist_ok=True)
     
     video_path = output_dir / f"{job_id}.mp4"
@@ -303,7 +303,7 @@ async def download_video(job_id: str):
     else:
         # Job not in memory (server restarted), check disk directly
         video_path = None
-        output_dir = Path("temp_videos")
+        output_dir = Path("/tmp/antigravity")
         
         # Check for different file extensions
         for ext in ['.gif', '.mp4', '.png', '.txt']:
