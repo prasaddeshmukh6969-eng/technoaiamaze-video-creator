@@ -279,7 +279,19 @@ async def get_job_status(job_id: str, request: Request) -> JobStatus:
     
     job_data = jobs[job_id]
     
-    result_url = None`r`n    if job_data["status"] == "completed":`r`n        base_url = str(request.base_url).rstrip("/")`.r`n        result_url = f"{base_url}/api/v1/download/{job_id}"`r`n    return JobStatus(`r`n        job_id=job_id,`r`n        status=job_data["status"],`r`n        progress=job_data.get("progress"),`r`n        message=job_data.get("message"),`r`n        result_url=result_url`r`n    )
+    # Build download URL dynamically from request
+    result_url = None
+    if job_data["status"] == "completed":
+        base_url = str(request.base_url).rstrip('/')
+        result_url = f"{base_url}/api/v1/download/{job_id}"
+    
+    return JobStatus(
+        job_id=job_id,
+        status=job_data["status"],
+        progress=job_data.get("progress"),
+        message=job_data.get("message"),
+        result_url=result_url
+    )
 
 
 @app.get("/api/v1/download/{job_id}")
