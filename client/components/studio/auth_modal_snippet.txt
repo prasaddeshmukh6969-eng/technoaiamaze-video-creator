@@ -1,0 +1,11 @@
+﻿            {/* Authentication Modal */}
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onSuccess={() => {
+                    setShowAuthModal(false);
+                    setTimeout(() => handleGenerate(), 500);
+                }}
+                onLogin={login}
+                onRegister={register}
+            />

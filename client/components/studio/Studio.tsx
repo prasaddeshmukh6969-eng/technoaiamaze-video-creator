@@ -507,7 +507,19 @@ export default function Studio() {
                                 )}
                             </div>
                         </motion.div>
-                    )}
+                    )}            {/* Authentication Modal */}
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onSuccess={() => {
+                    setShowAuthModal(false);
+                    // Automatically retry generation after successful auth
+                    setTimeout(() => handleGenerate(), 500);
+                }}
+                onLogin={login}
+                onRegister={register}
+            />
+
                 </div>
             </div>
         </div>
