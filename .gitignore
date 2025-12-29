@@ -48,3 +48,10 @@ frontend.log
 .next/
 out/
 dist/
+
+# User Data (DO NOT COMMIT UNENCRYPTED)
+server/data/users.json
+server/data/.backup_key
+
+# Encrypted backups CAN be committed
+!server/data/users_backup.enc

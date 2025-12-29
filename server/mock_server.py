@@ -2,7 +2,7 @@
 Antigravity AI - Simple Mock Backend
 Simplified version for testing without heavy AI dependencies
 """
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
@@ -14,11 +14,17 @@ from pathlib import Path
 import io
 import subprocess
 
+# Import authentication
+from routers.auth import router as auth_router, get_current_user
+
 app = FastAPI(
-    title="Antigravity AI - Mock Backend",
+    title="Technoaiamaze - AI Video Creator",
     version="1.0.0",
-    description="Simplified backend for testing"
+    description="AI-powered talking head video generation with authentication"
 )
+
+# Include authentication router
+app.include_router(auth_router)
 
 # CORS Configuration - Allow multiple frontend origins
 # This supports local development, Vercel, Hostinger, and custom domains
@@ -98,18 +104,21 @@ async def create_generation_job(
     archetype: str = Form("narrator_male"),
     pose_intensity: float = Form(1.0),
     language: Optional[str] = Form(None),
-    enhance: bool = Form(True)
+    enhance: bool = Form(True),
+    current_user: dict = Depends(get_current_user)  # REQUIRES AUTHENTICATION
 ) -> JSONResponse:
-    """Submit mock video generation job"""
+    """Submit mock video generation job - REQUIRES AUTHENTICATION"""
     
     job_id = str(uuid.uuid4())
     
-    # Store job
+    # Store job with user information
     jobs[job_id] = {
         "status": "pending",
         "progress": 0,
         "message": "Job queued...",
-        "created_at": time.time()
+        "created_at": time.time(),
+        "user_id": current_user['id'],  # Track user
+        "user_email": current_user['email']
     }
     
     # Start mock processing in background

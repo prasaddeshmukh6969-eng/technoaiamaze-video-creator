@@ -8,6 +8,8 @@ import AvatarSelector from './AvatarSelector';
 import ScriptGenerator from './ScriptGenerator';
 import LanguageSelector from './LanguageSelector';
 import BrandAssets from './BrandAssets';
+import AuthModal from '../auth/AuthModal';
+import { useAuth } from '@/hooks/useAuth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -30,6 +32,10 @@ interface JobStatus {
 }
 
 export default function Studio() {
+    // Authentication
+    const { isAuthenticated, token, login, register } = useAuth();
+    const [showAuthModal, setShowAuthModal] = useState(false);
+
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [text, setText] = useState('');
@@ -291,8 +297,8 @@ export default function Studio() {
                                                     handleVoicePreview(archetype.voice);
                                                 }}
                                                 className={`ml-1 p-1.5 rounded transition-all ${playingVoice === archetype.voice
-                                                        ? 'bg-cyan-600'
-                                                        : 'bg-gray-700 hover:bg-gray-600'
+                                                    ? 'bg-cyan-600'
+                                                    : 'bg-gray-700 hover:bg-gray-600'
                                                     }`}
                                                 title="Preview"
                                             >
@@ -418,8 +424,8 @@ export default function Studio() {
                     {/* Generate Button */}
                     <motion.button
                         className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${isGenerating || !image || !text.trim()
-                                ? 'bg-gray-700 cursor-not-allowed opacity-50'
-                                : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl'
+                            ? 'bg-gray-700 cursor-not-allowed opacity-50'
+                            : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl'
                             }`}
                         onClick={handleGenerate}
                         disabled={isGenerating || !image || !text.trim()}
