@@ -377,13 +377,38 @@ async def list_voices() -> JSONResponse:
 
 @app.get("/api/v1/voices/preview/{voice}")
 async def preview_voice(voice: str):
-    """Generate voice preview audio - Mock implementation"""
-    # In a real implementation, this would use edge-tts to generate a preview
-    # For mock mode, we'll return a 501 Not Implemented status
-    raise HTTPException(
-        status_code=501,
-        detail="Voice preview not available in mock mode. Please select a voice and generate your video to hear it."
-    )
+    """Generate voice preview audio using edge-tts"""
+    try:
+        import edge_tts
+        import tempfile
+        import os
+        
+        # Create sample text for preview
+        sample_text = "Hello! This is a preview of the selected voice for your video."
+        
+        # Create a temporary file for the audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+            temp_path = temp_file.name
+        
+        # Generate TTS audio
+        communicate = edge_tts.Communicate(sample_text, voice)
+        await communicate.save(temp_path)
+        
+        # Return the audio file
+        return FileResponse(
+            temp_path,
+            media_type='audio/mpeg',
+            filename=f'preview_{voice}.mp3',
+            background=None  # Don't delete file immediately
+        )
+    except ImportError:
+        # Fallback if edge-tts not available
+        raise HTTPException(
+            status_code=501,
+            detail="Voice preview requires edge-tts. Install with: pip install edge-tts"
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Voice preview failed: {str(e)}")
 
 
 @app.post("/api/v1/avatars/generate")
