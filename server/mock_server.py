@@ -14,17 +14,11 @@ from pathlib import Path
 import io
 import subprocess
 
-# Import authentication
-from routers.auth import router as auth_router, get_current_user
-
 app = FastAPI(
     title="Technoaiamaze - AI Video Creator",
     version="1.0.0",
-    description="AI-powered talking head video generation with authentication"
+    description="AI-powered talking head video generation"
 )
-
-# Include authentication router
-app.include_router(auth_router)
 
 # CORS Configuration - Allow multiple frontend origins
 # This supports local development, Vercel, Hostinger, and custom domains
@@ -104,20 +98,18 @@ async def create_generation_job(
     archetype: str = Form("narrator_male"),
     pose_intensity: float = Form(1.0),
     language: Optional[str] = Form(None),
-    enhance: bool = Form(True),
-    current_user: dict = Depends(get_current_user)  # REQUIRES AUTHENTICATION
+    enhance: bool = Form(True)
 ) -> JSONResponse:
-    """Submit mock video generation job - REQUIRES AUTHENTICATION"""
+    """Submit mock video generation job"""
     
     job_id = str(uuid.uuid4())
     
-    # Store job with user information
+    # Store job
     jobs[job_id] = {
         "status": "pending",
         "progress": 0,
         "message": "Job queued...",
         "created_at": time.time(),
-        "user_id": current_user['id'],  # Track user
         "user_email": current_user['email']
     }
     

@@ -8,6 +8,8 @@ import AvatarSelector from './AvatarSelector';
 import ScriptGenerator from './ScriptGenerator';
 import LanguageSelector from './LanguageSelector';
 import BrandAssets from './BrandAssets';
+import AuthModal from '../auth/AuthModal';
+import { useAuth } from '@/hooks/useAuth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -30,6 +32,10 @@ interface JobStatus {
 }
 
 export default function Studio() {
+    // Authentication
+    const { isAuthenticated, token, login, register } = useAuth();
+    const [showAuthModal, setShowAuthModal] = useState(false);
+
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [text, setText] = useState('');
@@ -150,7 +156,15 @@ export default function Studio() {
         if (!text.trim()) {
             setError('Please enter a script');
             return;
-        } try {
+        }
+
+        // Check authentication
+        if (!isAuthenticated || !token) {
+            setShowAuthModal(true);
+            return;
+        }
+
+        try {
             setError(null);
             setIsGenerating(true);
             setJobStatus(null);
@@ -167,7 +181,11 @@ export default function Studio() {
                 formData.append('language', outputLanguage);
             }
 
-            const response = await axios.post(`${API_URL}/api/v1/generate`, formData);
+            const response = await axios.post(`${API_URL}/api/v1/generate`, formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const { job_id } = response.data;
 
             setJobId(job_id);
@@ -489,7 +507,18 @@ export default function Studio() {
                                 )}
                             </div>
                         </motion.div>
-                    )}
+                    )}            {/* Authentication Modal */}
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onSuccess={() => {
+                    setShowAuthModal(false);
+                    // Automatically retry generation after successful auth
+                    setTimeout(() => handleGenerate(), 500);
+                }}
+                onLogin={login}
+                onRegister={register}
+            />
 
                 </div>
             </div>
