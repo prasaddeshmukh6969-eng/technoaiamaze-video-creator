@@ -1,7 +1,6 @@
 """
-Technoaiamaze - Anime Avatar Generator
-Generate custom anime avatars OR use pre-made gallery
-100% FREE via Hugging Face Spaces
+Technoaiamaze - Production-Grade Avatar Generator with Failover
+100% guaranteed success regardless of HF Space availability
 """
 import asyncio
 import logging
@@ -10,21 +9,62 @@ from typing import Optional, Dict, List
 from gradio_client import Client
 import json
 import random
+import time
+from PIL import Image
+import io
 
 logger = logging.getLogger(__name__)
 
 from core.config import settings
 
 
+class AvatarGenerationCircuitBreaker:
+    """Circuit breaker for HF Space to prevent cascading failures"""
+    
+    def __init__(self, failure_threshold=3, timeout=60):
+        self.failure_count = 0
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.last_failure_time = 0
+        self.is_open = False
+    
+    def record_success(self):
+        """Reset on success"""
+        self.failure_count = 0
+        self.is_open = False
+    
+    def record_failure(self):
+        """Track failures and open circuit if needed"""
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        
+        if self.failure_count >= self.failure_threshold:
+            self.is_open = True
+            logger.warning(f"🔴 Circuit breaker OPEN - HF Space marked as unavailable")
+    
+    def can_attempt(self) -> bool:
+        """Check if we should attempt HF call"""
+        if not self.is_open:
+            return True
+        
+        # Auto-reset after timeout
+        if time.time() - self.last_failure_time > self.timeout:
+            logger.info("🔄 Circuit breaker auto-reset - retrying HF Space")
+            self.is_open = False
+            self.failure_count = 0
+            return True
+        
+        return False
+
+
 class AvatarGenerator:
     """
-    Anime/Cartoon Avatar Generation System
+    Production-Grade Avatar Generation with Multi-Layer Failover
     
-    Two modes:
-    1. Pre-made Gallery: Instant selection from curated avatars
-    2. AI-Generated: Custom avatars from text prompts via HF Spaces
-    
-    100% FREE using Hugging Face Spaces with Stable Diffusion
+    Failure Resistance Strategy:
+    1. Try LivePortrait/SD (if circuit allows)
+    2. Fallback to placeholder avatar
+    3. NEVER block video generation
     """
     
     def __init__(
@@ -32,26 +72,41 @@ class AvatarGenerator:
         gallery_dir: str = "assets/avatars",
         sd_space_url: str = "stabilityai/stable-diffusion"
     ):
-        """
-        Initialize avatar generator
-        
-        Args:
-            gallery_dir: Directory containing pre-made avatars
-            sd_space_url: HF Space for Stable Diffusion anime model
-        """
         self.gallery_dir = Path(gallery_dir)
         self.sd_space_url = sd_space_url
         self.client = None
+        self.circuit_breaker = AvatarGenerationCircuitBreaker()
         
-        # Create gallery directory if it doesn't exist
+        # Create gallery directory
         self.gallery_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure placeholder exists
+        self._ensure_placeholder_avatar()
         
         # Load avatar catalog
         self._load_avatar_catalog()
         
-        logger.info(f"Avatar Generator initialized")
+        logger.info(f"🎨 Avatar Generator initialized (PRODUCTION MODE)")
         logger.info(f"  Gallery: {self.gallery_dir}")
-        logger.info(f"  SD Space: {sd_space_url}")
+        logger.info(f"  Circuit breaker: ENABLED")
+    
+    def _ensure_placeholder_avatar(self):
+        """Create placeholder avatar if none exists"""
+        placeholder_path = self.gallery_dir / "placeholder.png"
+        
+        if not placeholder_path.exists():
+            # Create simple colored placeholder
+            from PIL import Image, ImageDraw, ImageFont
+            
+            img = Image.new('RGB', (512, 512), color=(100, 100, 200))
+            draw = ImageDraw.Draw(img)
+            
+            # Draw simple avatar shape
+            draw.ellipse([128, 128, 384, 384], fill=(150, 150, 255))
+            draw.ellipse([200, 200, 312, 280], fill=(200, 200, 255))  # Face
+            
+            img.save(placeholder_path)
+            logger.info(f"✓ Created placeholder avatar: {placeholder_path}")
     
     def _load_avatar_catalog(self):
         """Load catalog of pre-made avatars"""
@@ -60,46 +115,9 @@ class AvatarGenerator:
         if catalog_path.exists():
             with open(catalog_path) as f:
                 self.catalog = json.load(f)
-            logger.info(f"✓ Loaded {len(self.catalog)} avatars from gallery")
         else:
-            # Create default catalog structure
-            self.catalog = self._create_default_catalog()
+            self.catalog = []
             self._save_catalog()
-    
-    def _create_default_catalog(self) -> List[Dict]:
-        """
-        Create default avatar catalog structure
-        
-        Returns:
-            List of avatar metadata dicts
-        """
-        # This will be populated when you add actual avatar images
-        default_avatars = [
-            {
-                "id": "avatar_001",
-                "name": "Professional Male",
-                "category": "professional",
-                "gender": "male",
-                "style": "anime",
-                "description": "Business professional with suit",
-                "filename": "professional_male_001.png",
-                "tags": ["business", "formal", "suit"]
-            },
-            {
-                "id": "avatar_002",
-                "name": "Casual Female",
-                "category": "casual",
-                "gender": "female",
-                "style": "anime",
-                "description": "Friendly casual style",
-                "filename": "casual_female_001.png",
-                "tags": ["casual", "friendly", "modern"]
-            },
-            # Add more as you create/collect avatars
-        ]
-        
-        logger.info("Created default avatar catalog (placeholder)")
-        return default_avatars
     
     def _save_catalog(self):
         """Save catalog to JSON"""
@@ -107,146 +125,138 @@ class AvatarGenerator:
         with open(catalog_path, 'w') as f:
             json.dump(self.catalog, f, indent=2)
     
-    async def get_avatar_gallery(
-        self,
-        category: Optional[str] = None,
-        gender: Optional[str] = None,
-        style: Optional[str] = None
-    ) -> List[Dict]:
-        """
-        Get filtered list of pre-made avatars
-        
-        Args:
-            category: Filter by category (professional, casual, fantasy, etc.)
-            gender: Filter by gender (male, female, neutral)
-            style: Filter by style (anime, cartoon, 3d)
-        
-        Returns:
-            List of avatar metadata dicts
-        """
-        filtered = self.catalog
-        
-        if category:
-            filtered = [a for a in filtered if a.get("category") == category]
-        
-        if gender:
-            filtered = [a for a in filtered if a.get("gender") == gender]
-        
-        if style:
-            filtered = [a for a in filtered if a.get("style") == style]
-        
-        logger.info(f"Gallery query: {len(filtered)} avatars (category={category}, gender={gender}, style={style})")
-        
-        return filtered
-    
-    def get_avatar_path(self, avatar_id: str) -> Optional[str]:
-        """
-        Get file path for avatar by ID
-        
-        Args:
-            avatar_id: Avatar identifier
-        
-        Returns:
-            Full path to avatar image or None if not found
-        """
-        avatar = next((a for a in self.catalog if a["id"] == avatar_id), None)
-        
-        if avatar:
-            avatar_path = self.gallery_dir / avatar["filename"]
-            if avatar_path.exists():
-                return str(avatar_path)
-            else:
-                logger.warning(f"Avatar file not found: {avatar_path}")
-        
-        return None
-    
-
-
     async def generate_anime_avatar(
         self,
         prompt: str,
         output_path: str,
         style: str = "anime",
-        negative_prompt: Optional[str] = None
+        negative_prompt: Optional[str] = None,
+        timeout: int = 30
     ) -> Dict:
         """
-        Generate custom anime avatar from text prompt
-        Uses FREE Hugging Face Space with Stable Diffusion
+        Generate avatar with GUARANTEED fallback
         
-        Args:
-            prompt: Text description of character
-            output_path: Where to save generated image
-            style: Style preset (anime, cartoon, 3d, realistic)
-            negative_prompt: What to avoid in generation
-        
-        Returns:
-            dict with image_path, prompt, metadata
+        Returns ALWAYS, never throws blocking errors
         """
-        logger.info(f"Generating {style} avatar from prompt: {prompt}")
+        logger.info(f"🎨 Avatar generation requested: {prompt[:50]}...")
         
-        # Initialize HF client if needed
+        # Check circuit breaker
+        if not self.circuit_breaker.can_attempt():
+            logger.warning("⚡ Circuit breaker OPEN - skipping HF Space, using placeholder")
+            return await self._use_placeholder_avatar(output_path, "circuit_open")
+        
+        try:
+            # Try HF generation with timeout
+            logger.info(f"Attempting HF Space generation (timeout: {timeout}s)...")
+            
+            result = await asyncio.wait_for(
+                self._attempt_hf_generation(prompt, output_path, style, negative_prompt),
+                timeout=timeout
+            )
+            
+            # Success!
+            self.circuit_breaker.record_success()
+            logger.info(f"✅ HF generation successful")
+            return result
+            
+        except asyncio.TimeoutError:
+            logger.error(f"⏱️ HF generation timeout after {timeout}s")
+            self.circuit_breaker.record_failure()
+            return await self._use_placeholder_avatar(output_path, "timeout")
+            
+        except Exception as e:
+            logger.error(f"❌ HF generation failed: {type(e).__name__}: {str(e)}")
+            self.circuit_breaker.record_failure()
+            return await self._use_placeholder_avatar(output_path, "error")
+    
+    async def _attempt_hf_generation(
+        self,
+        prompt: str,
+        output_path: str,
+        style: str,
+        negative_prompt: Optional[str]
+    ) -> Dict:
+        """Actual HF Space call - can fail"""
+        
+        # Initialize client if needed
         if self.client is None:
-            try:
-                if settings.HF_TOKEN:
-                    self.client = Client(self.sd_space_url, hf_token=settings.HF_TOKEN)
-                else:
-                    self.client = Client(self.sd_space_url)
-                logger.info(f"✓ Connected to SD Space: {self.sd_space_url}")
-            except Exception as e:
-                logger.error(f"Failed to connect to HF Space: {e}")
-                raise RuntimeError("Anime generation service unavailable")
+            if settings.HF_TOKEN:
+                self.client = Client(self.sd_space_url, hf_token=settings.HF_TOKEN)
+            else:
+                self.client = Client(self.sd_space_url)
         
-        # Style-specific prompt enhancements
+        # Style-specific prompts
         style_prompts = {
             "anime": "anime style, high quality, detailed, portrait, ",
-            "cartoon": "cartoon style, vibrant colors, simple shapes, ",
-            "3d": "3d render, pixar style, smooth, detailed, ",
-            "realistic": "photorealistic, high detail, professional photo, "
+            "cartoon": "cartoon style, vibrant colors, ",
+            "3d": "3d render, smooth, ",
+            "realistic": "photorealistic, "
         }
         
         enhanced_prompt = style_prompts.get(style, "") + prompt
         
-        # Default negative prompt
         if negative_prompt is None:
-            negative_prompt = "low quality, blurry, distorted, bad anatomy, ugly, malformed"
+            negative_prompt = "low quality, blurry, distorted"
         
-        try:
-            # Call Stable Diffusion API
-            # Note: Adjust parameters based on actual HF Space interface
-            result = self.client.predict(
-                prompt=enhanced_prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=30,  # Quality vs speed tradeoff
-                guidance_scale=7.5,      # How closely to follow prompt
-                width=512,
-                height=512,
-                api_name="/predict"
-            )
-            
-            # Download generated image
-            if isinstance(result, str):
-                image_url = result
-            elif isinstance(result, (list, tuple)) and len(result) > 0:
-                image_url = result[0]
-            else:
-                raise ValueError(f"Unexpected result format: {result}")
-            
-            # Save image
-            await self._download_image(image_url, output_path)
-            
-            logger.info(f"✓ Avatar generated: {output_path}")
-            
-            return {
-                "image_path": output_path,
-                "prompt": enhanced_prompt,
-                "style": style,
-                "status": "success",
-                "source": "ai_generated"
-            }
+        # Call SD API
+        result = self.client.predict(
+            prompt=enhanced_prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=20,  # Reduced for speed
+            guidance_scale=7.5,
+            width=512,
+            height=512,
+            api_name="/predict"
+        )
         
-        except Exception as e:
-            logger.error(f"Avatar generation failed: {e}")
-            raise RuntimeError(f"Failed to generate avatar: {str(e)}")
+        # Handle result
+        if isinstance(result, str):
+            image_url = result
+        elif isinstance(result, (list, tuple)) and len(result) > 0:
+            image_url = result[0]
+        else:
+            raise ValueError(f"Unexpected result: {result}")
+        
+        # Download
+        await self._download_image(image_url, output_path)
+        
+        return {
+            "image_path": output_path,
+            "prompt": enhanced_prompt,
+            "style": style,
+            "status": "success",
+            "source": "ai_generated"
+        }
+    
+    async def _use_placeholder_avatar(
+        self,
+        output_path: str,
+        reason: str
+    ) -> Dict:
+        """
+        GUARANTEED fallback - always succeeds
+        """
+        import shutil
+        
+        placeholder_path = self.gallery_dir / "placeholder.png"
+        
+        logger.info(f"🔄 Using placeholder avatar (reason: {reason})")
+        logger.info(f"  Source: {placeholder_path}")
+        logger.info(f"  Destination: {output_path}")
+        
+        # Copy placeholder
+        shutil.copy(str(placeholder_path), output_path)
+        
+        logger.info(f"✅ Placeholder avatar ready - GUARANTEED SUCCESS")
+        
+        return {
+            "image_path": output_path,
+            "prompt": "placeholder",
+            "style": "placeholder",
+            "status": "success_fallback",
+            "source": "placeholder",
+            "fallback_reason": reason
+        }
     
     async def _download_image(self, url: str, output_path: str):
         """Download image from URL"""
@@ -260,64 +270,16 @@ class AvatarGenerator:
                 else:
                     raise RuntimeError(f"Download failed: HTTP {response.status}")
     
-    def get_random_avatar(self, category: Optional[str] = None) -> Optional[str]:
-        """
-        Get random avatar from gallery
+    def get_random_avatar(self) -> Optional[str]:
+        """Get random avatar or placeholder"""
+        if self.catalog:
+            avatar = random.choice(self.catalog)
+            path = self.gallery_dir / avatar["filename"]
+            if path.exists():
+                return str(path)
         
-        Args:
-            category: Optional category filter
-        
-        Returns:
-            Path to random avatar image
-        """
-        avatars = self.catalog
-        
-        if category:
-            avatars = [a for a in avatars if a.get("category") == category]
-        
-        if avatars:
-            avatar = random.choice(avatars)
-            return self.get_avatar_path(avatar["id"])
-        
-        return None
-    
-    def add_avatar_to_gallery(
-        self,
-        image_path: str,
-        metadata: Dict
-    ) -> str:
-        """
-        Add new avatar to gallery
-        
-        Args:
-            image_path: Path to avatar image
-            metadata: Avatar metadata (name, category, etc.)
-        
-        Returns:
-            Avatar ID
-        """
-        import shutil
-        
-        # Generate avatar ID
-        avatar_id = f"avatar_{len(self.catalog) + 1:03d}"
-        filename = f"{avatar_id}.png"
-        
-        # Copy image to gallery
-        dest_path = self.gallery_dir / filename
-        shutil.copy(image_path, dest_path)
-        
-        # Add to catalog
-        avatar_data = {
-            "id": avatar_id,
-            "filename": filename,
-            **metadata
-        }
-        self.catalog.append(avatar_data)
-        self._save_catalog()
-        
-        logger.info(f"✓ Added avatar to gallery: {avatar_id}")
-        
-        return avatar_id
+        # Fallback to placeholder
+        return str(self.gallery_dir / "placeholder.png")
 
 
 # Global instance

@@ -1,7 +1,6 @@
 """
-Technoaiamaze - LivePortrait Hugging Face Spaces Wrapper
-100% FREE video animation via Hugging Face Spaces API (KwaiVGI/LivePortrait)
-With comprehensive error handling and fallback mechanisms
+Technoaiamaze - Production-Grade LivePortrait with Failure Resistance
+GUARANTEED to never block video generation pipeline
 """
 import asyncio
 import aiohttp
@@ -12,201 +11,190 @@ from gradio_client import Client
 import tempfile
 import shutil
 import os
+import time
 from core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
+class LivePortraitCircuitBreaker:
+    """Prevent cascading failures from HF Space"""
+    
+    def __init__(self, failure_threshold=2, timeout=300):
+        self.failure_count = 0
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.last_failure_time = 0
+        self.is_open = False
+    
+    def record_success(self):
+        self.failure_count = 0
+        self.is_open = False
+    
+    def record_failure(self):
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        if self.failure_count >= self.failure_threshold:
+            self.is_open = True
+            logger.warning(f"🔴 LivePortrait circuit breaker OPEN")
+    
+    def can_attempt(self) -> bool:
+        if not self.is_open:
+            return True
+        if time.time() - self.last_failure_time > self.timeout:
+            logger.info("🔄 LivePortrait circuit breaker reset")
+            self.is_open = False
+            self.failure_count = 0
+            return True
+        return False
+
+
 class LivePortraitEngine:
     """
-    Hugging Face Spaces API wrapper for LivePortrait with error recovery
+    Production-Grade LivePortrait with Total Failure Resistance
+    
+    KEY PRINCIPLE: Video generation MUST succeed even if LivePortrait fails
     """
     
     def __init__(self, space_url: str = "KwaiVGI/LivePortrait"):
         self.space_url = space_url
         self.client = None
         self.is_available = False
+        self.circuit_breaker = LivePortraitCircuitBreaker()
         
-        logger.info(f"LivePortrait Engine initialized with HF Space: {space_url}")
-    
-    async def check_availability(self) -> bool:
-        """Check if Hugging Face Space is available"""
-        try:
-            logger.info(f"Checking HF Space availability: {self.space_url}")
-            
-            if settings.HF_TOKEN:
-                logger.info("Using HF_TOKEN for authentication")
-                self.client = Client(self.space_url, hf_token=settings.HF_TOKEN)
-            else:
-                logger.warning("No HF_TOKEN - using public access (may have limitations)")
-                self.client = Client(self.space_url)
-                
-            self.is_available = True
-            logger.info(f"✓ HF Space '{self.space_url}' is available")
-            return True
-            
-        except Exception as e:
-            error_msg = str(e)
-            logger.error(f"❌ HF Space unavailable: {error_msg}", exc_info=True)
-            logger.error(f"   Exception type: {type(e).__name__}")
-            
-            # Check for specific error types
-            if "rate limit" in error_msg.lower():
-                logger.error("   → Rate limit exceeded on HuggingFace")
-            elif "not found" in error_msg.lower() or "404" in error_msg:
-                logger.error(f"   → Space '{self.space_url}' not found or moved")
-            elif "timeout" in error_msg.lower():
-                logger.error("   → Connection timeout - HF Space may be overloaded")
-            
-            self.is_available = False
-            return False
+        logger.info(f"🎬 LivePortrait Engine initialized (HARDENED MODE)")
     
     async def generate_video(
         self,
         image_path: str,
         audio_path: str,
         output_path: str,
-        options: Optional[Dict] = None
+        options: Optional[Dict] = None,
+        timeout: int = 60
     ) -> Dict:
         """
-        Generate animated video from image + audio with comprehensive error handling
+        PRODUCTION-GRADE video generation with GUARANTEED result
+        
+        NEVER throws fatal error
+        ALWAYS returns a result (success or graceful failure)
         """
-        if not self.is_available:
-            logger.info("Checking LivePortrait availability...")
-            await self.check_availability()
-        
-        if not self.is_available:
-            raise RuntimeError(
-                "LivePortrait HF Space is not available. "
-                "Please check https://huggingface.co/spaces/KwaiVGI/LivePortrait "
-                "or use avatar upload instead of generation."
-            )
-        
-        options = options or {}
-        mode = options.get("mode", "normal")
-        
-        logger.info(f"Starting LivePortrait video generation...")
+        logger.info(f"🎬 Video generation starting...")
         logger.info(f"  Image: {image_path}")
         logger.info(f"  Audio: {audio_path}")
-        logger.info(f"  Output: {output_path}")
-        logger.info(f"  Mode: {mode}")
+        
+        # Check circuit breaker
+        if not self.circuit_breaker.can_attempt():
+            logger.warning("⚡ LivePortrait circuit OPEN - returning immediate graceful failure")
+            return self._graceful_failure("circuit_breaker_open", image_path, audio_path)
         
         try:
-            # Try the API call with detailed error capture
-            logger.info(f"Calling LivePortrait API endpoint...")
+            # Attempt with timeout
+            logger.info(f"Attempting LivePortrait generation (timeout: {timeout}s)...")
             
-            result = self.client.predict(
-                image_path,     # source_image (0)
-                audio_path,     # driving_audio (1)
-                True,           # relative_motion (2)
-                True,           # do_crop (3)
-                True,           # paste_back (4)
-                api_name="/gpu_wrapped_execute_video" 
+            result = await asyncio.wait_for(
+                self._attempt_liveportrait_generation(image_path, audio_path, output_path, options),
+                timeout=timeout
             )
             
-            logger.info(f"✓ API call successful")
-            logger.info(f"  Result type: {type(result)}")
-            logger.info(f"  Result length: {len(result) if isinstance(result, (list, tuple)) else 'N/A'}")
+            # SUCCESS!
+            self.circuit_breaker.record_success()
+            logger.info(f"✅✅✅ LIVEPORTRAIT SUCCESS ✅✅✅")
+            return result
             
-            # Handle result
-            if isinstance(result, str):
-                video_url = result
-                logger.info(f"  Result is string: {video_url[:100]}...")
-            elif isinstance(result, (list, tuple)) and len(result) > 0:
-                video_url = result[0]
-                logger.info(f"  Result is tuple/list, first element: {video_url}")
-                if isinstance(video_url, dict) and "video" in video_url:
-                    video_url = video_url["video"]
-                    logger.info(f"  Extracted video from dict: {video_url}")
-            else:
-                error_msg = f"Unexpected result format: {type(result)} - {result}"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
+        except asyncio.TimeoutError:
+            logger.error(f"⏱️ LivePortrait timeout after {timeout}s")
+            self.circuit_breaker.record_failure()
+            return self._graceful_failure("timeout", image_path, audio_path)
             
-            # Download video
-            logger.info(f"Downloading generated video...")
-            await self._download_file(video_url, output_path)
-            
-            logger.info(f"✓✓✓ Video generated successfully: {output_path}")
-            
-            return {
-                "video_path": output_path,
-                "status": "success",
-                "mode": mode,
-                "source": "liveportrait_hf"
-            }
-        
         except Exception as e:
-            # COMPREHENSIVE ERROR LOGGING
-            error_type = type(e).__name__
-            error_msg = str(e)
-            
-            logger.error("=" * 80)
-            logger.error("❌❌❌ LIVEPORTRAIT GENERATION FAILED ❌❌❌")
-            logger.error("=" * 80)
-            logger.error(f"Exception Type: {error_type}")
-            logger.error(f"Exception Message: {error_msg}")
-            logger.error(f"Image Path: {image_path}")
-            logger.error(f"Audio Path: {audio_path}")
-            logger.error(f"HF Space: {self.space_url}")
-            logger.error(f"Has HF Token: {bool(settings.HF_TOKEN)}")
-            logger.error("=" * 80, exc_info=True)
-            
-            # Provide helpful error messages
-            if "upstream" in error_msg.lower() and "gradio" in error_msg.lower():
-                detailed_error = (
-                    f"HuggingFace Space Error: {error_msg}\n\n"
-                    "This error comes from the HuggingFace Space itself. Common causes:\n"
-                    "1. Space is temporarily down or restarting\n"
-                    "2. Space is overloaded with requests\n"
-                    "3. Input format incompatible with current Space version\n"
-                    "4. Rate limiting on free tier\n\n"
-                    "SOLUTIONS:\n"
-                    "• Use 'Upload Avatar' instead of 'Generate Avatar'\n"
-                    "• Try again in a few minutes\n"
-                    "• Check Space status: https://huggingface.co/spaces/KwaiVGI/LivePortrait"
-                )
-            elif "api_name" in error_msg.lower() or "parameter" in error_msg.lower():
-                detailed_error = (
-                    f"API Mismatch Error: {error_msg}\n\n"
-                    "The LivePortrait Space API has changed.\n"
-                    "The code needs to be updated to match the new API structure.\n\n"
-                    "WORKAROUND: Use 'Upload Avatar' feature instead."
-                )
-            elif "timeout" in error_msg.lower():
-                detailed_error = f"Timeout Error: {error_msg}\n\nThe Space is slow. Try again or use avatar upload."
-            else:
-                detailed_error = f"LivePortrait Error: {error_msg}\n\nUse 'Upload Avatar' as alternative."
-            
-            raise RuntimeError(detailed_error)
+            logger.error(f"❌ LivePortrait failed: {type(e).__name__}: {str(e)}")
+            self.circuit_breaker.record_failure()
+            return self._graceful_failure("error", image_path, audio_path, str(e))
     
-    async def animate_anime_character(
+    async def _attempt_liveportrait_generation(
         self,
         image_path: str,
         audio_path: str,
         output_path: str,
-        style: str = "anime"
+        options: Optional[Dict]
     ) -> Dict:
-        """Specialized method for anime character animation"""
-        return await self.generate_video(
-            image_path=image_path,
-            audio_path=audio_path,
-            output_path=output_path,
-            options={"mode": "anime", "style": style}
+        """Actual LivePortrait call - can fail"""
+        
+        # Initialize client
+        if self.client is None:
+            if settings.HF_TOKEN:
+                self.client = Client(self.space_url, hf_token=settings.HF_TOKEN)
+            else:
+                self.client = Client(self.space_url)
+        
+        # Call API
+        result = self.client.predict(
+            image_path,
+            audio_path,
+            True,  # relative_motion
+            True,  # do_crop
+            True,  # paste_back
+            api_name="/gpu_wrapped_execute_video"
         )
+        
+        # Extract video
+        if isinstance(result, str):
+            video_url = result
+        elif isinstance(result, (list, tuple)) and len(result) > 0:
+            video_url = result[0]
+            if isinstance(video_url, dict) and "video" in video_url:
+                video_url = video_url["video"]
+        else:
+            raise ValueError(f"Unexpected result: {result}")
+        
+        # Download
+        await self._download_file(video_url, output_path)
+        
+        return {
+            "video_path": output_path,
+            "status": "success",
+            "source": "liveportrait_hf"
+        }
+    
+    def _graceful_failure(
+        self,
+        reason: str,
+        image_path: str,
+        audio_path: str,
+        error_detail: str = ""
+    ) -> Dict:
+        """
+        GUARANTEED graceful failure response
+        
+        Returns structured failure that allows pipeline to continue
+        """
+        logger.warning(f"⚠️ GRACEFUL FAILURE MODE")
+        logger.warning(f"  Reason: {reason}")
+        if error_detail:
+            logger.warning(f"  Detail: {error_detail}")
+        logger.warning(f"  ✅ Returning graceful failure - pipeline can continue")
+        
+        return {
+            "video_path": None,
+            "status": "graceful_failure",
+            "reason": reason,
+            "error": error_detail,
+            "source": "liveportrait_failed",
+            "image_path": image_path,
+            "audio_path": audio_path,
+            "message": (
+                "LivePortrait temporarily unavailable. "
+                "Please use 'Upload Avatar' for reliable video generation."
+            )
+        }
     
     async def _download_file(self, url: str, output_path: str):
-        """Download file from URL to local path"""
+        """Download file with error handling"""
         try:
-            # Handle local file paths returned by gradio_client
             if os.path.exists(url):
-                logger.info(f"File is local, copying: {url}")
                 shutil.copy(url, output_path)
-                logger.info(f"✓ Copied local file to: {output_path}")
                 return
-
-            # Download from URL
-            logger.info(f"Downloading from URL: {url[:100]}...")
+            
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
                     if response.status == 200:
@@ -216,19 +204,11 @@ class LivePortraitEngine:
                                 if not chunk:
                                     break
                                 f.write(chunk)
-                        logger.info(f"✓ Downloaded to: {output_path}")
                     else:
                         raise RuntimeError(f"Download failed: HTTP {response.status}")
-                        
         except Exception as e:
-            logger.error(f"File download error: {e}", exc_info=True)
+            logger.error(f"Download error: {e}")
             raise
-    
-    def get_supported_options(self) -> Dict:
-        return {
-            "modes": ["normal", "anime", "cartoon"],
-            "features": ["relative_motion", "paste_back", "do_crop"]
-        }
 
 
 # Global instance
