@@ -1,0 +1,102 @@
+﻿py : C:\Program Files\Python312\Lib
+\site-packages\pydub\utils.py:170: 
+RuntimeWarning: Couldn't find 
+ffmpeg or avconv - defaulting to 
+ffmpeg, but may not work
+At line:1 char:1
++ py test_full.py > 
+test_full_output_2.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          : NotS 
+   pecified: (C:\Program File...u  
+  t may not work:String) [], Rem   
+ oteException
+    + FullyQualifiedErrorId : Nati 
+   veCommandError
+ 
+  warn("Couldn't find ffmpeg or 
+avconv - defaulting to ffmpeg, but 
+may not work", RuntimeWarning)
+Γ¥î LivePortrait failed: AppError: 
+The upstream Gradio app has raised 
+an exception but has not enabled 
+verbose error reporting. To 
+enable, set show_error=True in 
+launch().
+ΓÜá∩╕Å GRACEFUL FAILURE MODE
+  Reason: error
+  Detail: The upstream Gradio app 
+has raised an exception but has 
+not enabled verbose error 
+reporting. To enable, set 
+show_error=True in launch().
+  Γ£à Returning graceful failure - 
+pipeline can continue
+======================================================================
+TECHNOAIAMAZE FULL VIDEO GENERATION TEST
+======================================================================
+
+≡ƒôé Temp Directory: C:\Users\Shri\AppData\Local\Temp\technoaiamaze_fulltest
+≡ƒôé Output Location: C:\Users\Shri\Desktop\technoaiamaze_test_output.mp4
+
+Starting full video generation test...
+
+≡ƒôÑ Importing engines...
+  Γ£à Engines imported successfully
+
+======================================================================
+[STEP 1/5] Creating Test Image
+======================================================================
+  Γ£à Test image created
+  ≡ƒôü Location: C:\Users\Shri\AppData\Local\Temp\technoaiamaze_fulltest\test_avatar.jpg
+  ≡ƒôÅ Size: 27,967 bytes
+
+======================================================================
+[STEP 2/5] Generating Audio from Text
+======================================================================
+  ≡ƒô¥ Text: "Hello! This is a test of the Technoaiamaze AI video creator. If you can hear this, the audio synthesis is working correctly."
+
+  ≡ƒÄñ Synthesizing speech...
+  Γ£à Audio generated successfully
+  ≡ƒôü Location: C:\Users\Shri\AppData\Local\Temp\technoaiamaze_fulltest\test_audio_normalized.wav
+  ≡ƒôÅ Size: 314,924 bytes
+  ΓÅ▒∩╕Å  Duration: 9.84s
+  ≡ƒÄ╡ Voice: en-GB-RyanNeural
+  ≡ƒöº Engine: edge-tts
+
+======================================================================
+[STEP 3/5] Checking GPU Status
+======================================================================
+  Γ£à GPU Available: NVIDIA GeForce GTX 1650
+
+======================================================================
+[STEP 4/5] Generating Animated Video
+======================================================================
+  ≡ƒÄ¼ Starting animation...
+  ΓÅ│ This may take 30-120 seconds...
+  Γä╣∩╕Å  Using LivePortrait API via Gradio
+
+Loaded as API: https://klingteam-liveportrait.hf.space
+  Animation result status: graceful_failure
+  ΓÜá∩╕Å  Animation service unavailable
+  Reason: error
+  Message: LivePortrait temporarily unavailable. Please use 'Upload Avatar' for reliable video generation.
+
+======================================================================
+ΓÜá∩╕Å  PARTIAL SUCCESS
+======================================================================
+
+Γ£à Audio synthesis: WORKING
+Γ¥î Video animation: API temporarily unavailable
+
+This is normal for API-based services.
+
+Your system components are working correctly.
+Try again later when the LivePortrait API is available,
+or consider using a local animation engine.
+
+
+Test complete.
+Temp files location: C:\Users\Shri\AppData\Local\Temp\technoaiamaze_fulltest
+

@@ -14,6 +14,7 @@ import logging
 import cv2
 import shutil
 import asyncio
+import tempfile
 
 # Remove Celery/MinIO imports to avoid dependency errors
 # from core.celery_app import celery_app
@@ -26,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Temporary file storage - matches the static mount in main.py
-TEMP_DIR = Path("/tmp/antigravity")
+# Temporary file storage - Windows compatible
+TEMP_DIR = Path(tempfile.gettempdir()) / "antigravity"
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 # Base URL for serving static files (adjust based on your environment)
@@ -106,7 +107,7 @@ async def process_video_generation_task(
         logger.info(f"[{job_id}] Animating portrait...")
         animated_path = str(TEMP_DIR / f"{job_id}_animated.mp4")
         
-        await animator.generate_animation(
+        anim_result = await animator.generate_animation(
             image_path=image_path,
             audio_path=audio_result["audio_path"],
             output_path=animated_path,
@@ -114,6 +115,13 @@ async def process_video_generation_task(
             fps=25,
             options={"mode": mode, "style": style}
         )
+        
+        # Check for graceful failure
+        if isinstance(anim_result, dict) and anim_result.get("status") != "success":
+            raise Exception(f"Animation failed: {anim_result.get('message', 'Service unavailable')}")
+            
+        if not os.path.exists(animated_path):
+            raise Exception("Animation completed but output file is missing")
         
         logger.info(f"[{job_id}] ✓ Animation complete")
         update_progress(80)

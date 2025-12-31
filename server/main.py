@@ -38,7 +38,8 @@ app.include_router(v1_generation.router, prefix="/api/v1", tags=["generation"])
 
 # Mount static files for local storage (Bypass MinIO)
 from pathlib import Path
-TEMP_DIR = Path("/tmp/antigravity")
+import tempfile
+TEMP_DIR = Path(tempfile.gettempdir()) / "antigravity"
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static/generated", StaticFiles(directory=str(TEMP_DIR)), name="generated")
 

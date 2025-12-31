@@ -70,7 +70,7 @@ class LivePortraitEngine:
         audio_path: str,
         output_path: str,
         options: Optional[Dict] = None,
-        timeout: int = 60
+        timeout: int = 180
     ) -> Dict:
         """
         PRODUCTION-GRADE video generation with GUARANTEED result
@@ -209,6 +209,25 @@ class LivePortraitEngine:
         except Exception as e:
             logger.error(f"Download error: {e}")
             raise
+
+
+    async def animate_anime_character(
+        self,
+        image_path: str,
+        audio_path: str,
+        output_path: str,
+        style: str = "anime"
+    ) -> Dict:
+        """
+        Generate anime animation (Delegates to standard generation for now)
+        """
+        logger.info(f"🎨 Generating Anime animation ({style})")
+        return await self.generate_video(
+            image_path=image_path,
+            audio_path=audio_path,
+            output_path=output_path,
+            options={"mode": "anime", "style": style}
+        )
 
 
 # Global instance

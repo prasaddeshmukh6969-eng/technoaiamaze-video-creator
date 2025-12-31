@@ -1,0 +1,62 @@
+﻿py : C:\Program Files\Python312\Lib
+\site-packages\pydub\utils.py:170: 
+RuntimeWarning: Couldn't find 
+ffmpeg or avconv - defaulting to 
+ffmpeg, but may not work
+At line:1 char:1
++ py test_full.py > 
+test_full_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo          : NotS 
+   pecified: (C:\Program File...u  
+  t may not work:String) [], Rem   
+ oteException
+    + FullyQualifiedErrorId : Nati 
+   veCommandError
+ 
+  warn("Couldn't find ffmpeg or 
+avconv - defaulting to ffmpeg, but 
+may not work", RuntimeWarning)
+Traceback (most recent call last):
+  File 
+"C:\Users\Shri\Desktop\antigravity 
+Tools\ai video 
+creator\server\test_full.py", line 
+54, in run_full_test
+    cv2.putText(img, 
+"TECHNOAIAMAZE", (50, 200), 
+cv2.FONT_HERSHEY_BOLD, 1.2, (255, 
+255, 255), 3)
+                                   
+              ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'cv2' has 
+no attribute 'FONT_HERSHEY_BOLD'
+======================================================================
+TECHNOAIAMAZE FULL VIDEO GENERATION TEST
+======================================================================
+
+≡ƒôé Temp Directory: C:\Users\Shri\AppData\Local\Temp\technoaiamaze_fulltest
+≡ƒôé Output Location: C:\Users\Shri\Desktop\technoaiamaze_test_output.mp4
+
+Starting full video generation test...
+
+≡ƒôÑ Importing engines...
+  Γ£à Engines imported successfully
+
+======================================================================
+[STEP 1/5] Creating Test Image
+======================================================================
+
+======================================================================
+Γ¥î TEST FAILED
+======================================================================
+
+Error: AttributeError
+Message: module 'cv2' has no attribute 'FONT_HERSHEY_BOLD'
+
+
+
+Test complete.
+Temp files location: C:\Users\Shri\AppData\Local\Temp\technoaiamaze_fulltest
+
