@@ -1,0 +1,58 @@
+Importing v1_generation...
+Import FAILED: 6 validation errors for Settings
+DATABASE_URL
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+REDIS_URL
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+MINIO_ENDPOINT
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+MINIO_ACCESS_KEY
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+MINIO_SECRET_KEY
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+JWT_SECRET
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+Traceback (most recent call last):
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\test\test_import.py", line 10, in <module>
+    from routers import v1_generation
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\server\routers\v1_generation.py", line 22, in <module>
+    from engines import audio_synthesizer, animator, enhancer
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\server\engines\__init__.py", line 2, in <module>
+    from .audio_synthesizer import audio_synthesizer, AudioSynthesizer
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\server\engines\audio_synthesizer.py", line 21, in <module>
+    from core.config import settings, get_voice_config, get_language_voice
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\server\core\__init__.py", line 2, in <module>
+    from .config import settings, get_voice_config, get_language_voice
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\server\core\config.py", line 115, in <module>
+    settings = Settings()
+               ^^^^^^^^^^
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\server\.venv\Lib\site-packages\pydantic_settings\main.py", line 194, in __init__
+    super().__init__(
+  File "C:\Users\Shri\Desktop\antigravity Tools\ai video creator\server\.venv\Lib\site-packages\pydantic\main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 6 validation errors for Settings
+DATABASE_URL
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+REDIS_URL
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+MINIO_ENDPOINT
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+MINIO_ACCESS_KEY
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+MINIO_SECRET_KEY
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+JWT_SECRET
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
