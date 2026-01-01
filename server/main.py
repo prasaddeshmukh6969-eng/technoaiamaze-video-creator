@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 import logging
 
 from core.config import settings
-from routers import v1_generation
+from routers import v1_generation, v1_analytics
 
 # Configure logging
 logging.basicConfig(
@@ -35,6 +35,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(v1_generation.router, prefix="/api/v1", tags=["generation"])
+app.include_router(v1_analytics.router)  # Analytics endpoints
 
 # Mount static files for local storage (Bypass MinIO)
 from pathlib import Path

@@ -1,10 +1,17 @@
 'use client'
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Sparkles, Zap, Globe, ChevronRight, Check, Lock, MessageCircle, Languages, LayoutTemplate, Mic, Grid3x3, Image, Calendar, FileSpreadsheet } from 'lucide-react';
+import { trackPageView } from '@/lib/analytics';
 
 export default function Home() {
+    // Track page view on mount
+    useEffect(() => {
+        trackPageView('/');
+    }, []);
+
     const features = [
         {
             id: 1,

@@ -1,13 +1,19 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Sparkles, MessageCircle, Languages, LayoutTemplate } from 'lucide-react';
 import Link from 'next/link';
+import { trackPageView, trackTemplateClick } from '@/lib/analytics';
 
 export default function GeneratePage() {
     const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
     const [step, setStep] = useState<'choose' | 'customize' | 'generate'>('choose');
+
+    // Track page view on mount
+    useEffect(() => {
+        trackPageView('/generate');
+    }, []);
 
     const templates = [
         {
@@ -78,6 +84,7 @@ export default function GeneratePage() {
                                 transition={{ delay: index * 0.1 }}
                                 whileHover={{ scale: 1.02 }}
                                 onClick={() => {
+                                    trackTemplateClick(template.id); // Track the click
                                     setSelectedTemplate(template.id);
                                     setStep('customize');
                                 }}
