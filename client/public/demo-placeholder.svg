@@ -1,0 +1,26 @@
+<svg width="800" height="450" viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <rect width="800" height="450" fill="url(#gradient)" rx="12"/>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.4" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Play button circle -->
+  <circle cx="400" cy="225" r="60" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(255, 255, 255, 0.3)" stroke-width="2"/>
+  
+  <!-- Play icon -->
+  <path d="M380 205 L420 225 L380 245 Z" fill="white" opacity="0.8"/>
+  
+  <!-- Text -->
+  <text x="400" y="330" font-family="Inter, sans-serif" font-size="24" fill="white" text-anchor="middle" font-weight="600">
+    Watch Demo Video
+  </text>
+  <text x="400" y="360" font-family="Inter, sans-serif" font-size="16" fill="rgba(255, 255, 255, 0.6)" text-anchor="middle">
+    See how WhatsApp marketing videos are created in 2 minutes
+  </text>
+</svg>

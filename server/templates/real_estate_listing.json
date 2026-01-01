@@ -1,0 +1,50 @@
+{
+    "id": "real_estate_listing",
+    "name": "Real Estate Property Listing",
+    "category": "real_estate",
+    "description": "Showcase properties with professional appeal",
+    "duration": 20,
+    "script_template": "New property! {bhk} BHK {property_type} in {location}. {area} sq ft, ₹{price} lakhs. Contact me at {contact}!",
+    "variables": [
+        {
+            "key": "bhk",
+            "label": "BHK (Bedrooms)",
+            "placeholder": "3",
+            "required": true
+        },
+        {
+            "key": "property_type",
+            "label": "Property Type",
+            "placeholder": "apartment/villa/plot",
+            "required": true
+        },
+        {
+            "key": "location",
+            "label": "Location",
+            "placeholder": "Whitefield, Bangalore",
+            "required": true
+        },
+        {
+            "key": "area",
+            "label": "Area (sq ft)",
+            "placeholder": "1450",
+            "required": true
+        },
+        {
+            "key": "price",
+            "label": "Price (Lakhs)",
+            "placeholder": "85",
+            "required": true
+        },
+        {
+            "key": "contact",
+            "label": "Contact Number",
+            "placeholder": "9876543210",
+            "required": true
+        }
+    ],
+    "voice_preset": "en-IN-NeerjaNeural",
+    "background_color": "#4A90E2",
+    "avatar_style": "professional_indian",
+    "whatsapp_optimized": true
+}

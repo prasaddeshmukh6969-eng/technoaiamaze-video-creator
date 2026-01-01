@@ -1,0 +1,32 @@
+{
+    "id": "restaurant_daily_special",
+    "name": "Restaurant Daily Special",
+    "category": "restaurant",
+    "description": "Perfect for promoting daily specials and limited-time offers",
+    "duration": 15,
+    "script_template": "This week only! Try our new {dish_name} for just ₹{price}. Visit us at {location}!",
+    "variables": [
+        {
+            "key": "dish_name",
+            "label": "Dish Name",
+            "placeholder": "Paneer Tikka Masala",
+            "required": true
+        },
+        {
+            "key": "price",
+            "label": "Price",
+            "placeholder": "299",
+            "required": true
+        },
+        {
+            "key": "location",
+            "label": "Restaurant Location",
+            "placeholder": "Indiranagar, Bangalore",
+            "required": true
+        }
+    ],
+    "voice_preset": "hi-IN-MadhurNeural",
+    "background_color": "#FF6B35",
+    "avatar_style": "professional_indian",
+    "whatsapp_optimized": true
+}

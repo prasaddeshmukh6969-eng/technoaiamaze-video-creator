@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     # Hugging Face Token (for Spaces)
     HF_TOKEN: Optional[str] = None
     
+    # HeyGen API (Production-Ready Alternative)
+    HEYGEN_API_KEY: Optional[str] = None
+    
+    # Animation Engine Selection
+    # Options: "heygen" (recommended), "liveportrait" (unreliable), "sadtalker" (local)
+    ANIMATION_ENGINE: str = "heygen"
+    
     # Voice Configuration - BEST FREE VOICES
     # Edge-TTS Neural Voices (90% premium quality)
     VOICE_ARCHETYPES: dict = {

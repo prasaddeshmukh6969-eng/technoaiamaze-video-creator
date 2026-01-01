@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "Technoaiamaze - Anime Marketing Video Creator",
-    description: "Create engaging anime marketing videos for your brand. Upload your company logo, enter your script, and generate professional anime videos with AI-powered animation and voice synthesis.",
-    keywords: "anime video, marketing video, company branding, anime character, text-to-speech, AI animation, business video",
+    title: "Technoaiamaze - WhatsApp Marketing Videos in 10 Languages | India's #1 AI Video Creator",
+    description: "Create WhatsApp Status videos in Hindi, English & 8+ languages. Perfect for Indian businesses. Restaurant templates, Real Estate videos, Course promos. ₹2,999/month. Start FREE!",
+    keywords: "whatsapp video maker, whatsapp status video creator, hindi video creator, multi language video, indian business marketing, restaurant video, real estate video, ai video generator india, marketing video maker, video creator for small business",
 };
 
 export default function RootLayout({

@@ -1,0 +1,38 @@
+{
+    "id": "education_course_promo",
+    "name": "Education Course Promotion",
+    "category": "education",
+    "description": "Promote online courses and tutoring services",
+    "duration": 20,
+    "script_template": "Enroll now in {course_name}! {duration} course with live classes. Special price ₹{price}. Limited seats. Call {contact}!",
+    "variables": [
+        {
+            "key": "course_name",
+            "label": "Course Name",
+            "placeholder": "NEET/JEE Coaching",
+            "required": true
+        },
+        {
+            "key": "duration",
+            "label": "Duration",
+            "placeholder": "6 month",
+            "required": true
+        },
+        {
+            "key": "price",
+            "label": "Price",
+            "placeholder": "15,000",
+            "required": true
+        },
+        {
+            "key": "contact",
+            "label": "Contact",
+            "placeholder": "9876543210",
+            "required": true
+        }
+    ],
+    "voice_preset": "hi-IN-SwaraNeural",
+    "background_color": "#9B59B6",
+    "avatar_style": "friendly_teacher",
+    "whatsapp_optimized": true
+}
