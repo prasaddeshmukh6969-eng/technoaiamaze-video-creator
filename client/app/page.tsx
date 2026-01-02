@@ -1,12 +1,21 @@
 'use client'
 
-import { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Sparkles, Zap, Globe, ChevronRight, Check, Lock, MessageCircle, Languages, LayoutTemplate, Mic, Grid3x3, Image, Calendar, FileSpreadsheet } from 'lucide-react';
-import { trackPageView } from '@/lib/analytics';
+import { Sparkles, Zap, Globe, ChevronRight, Check, Lock, MessageCircle, Languages, LayoutTemplate, Mic, Grid3x3, Image, Calendar, FileSpreadsheet, X } from 'lucide-react';
+import { trackPageView, voteFeature } from '@/lib/analytics';
 
 export default function Home() {
+    const [showVoteModal, setShowVoteModal] = useState(false);
+    const [votingFor, setVotingFor] = useState<string | null>(null);
+    const [voteMessage, setVoteMessage] = useState('');
+
+    // Email signup state
+    const [email, setEmail] = useState('');
+    const [emailLoading, setEmailLoading] = useState(false);
+    const [emailMessage, setEmailMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
     // Track page view on mount
     useEffect(() => {
         trackPageView('/');
@@ -86,6 +95,42 @@ export default function Home() {
             badge: 'COMING SOON'
         }
     ];
+
+    const handleVote = async (featureId: string) => {
+        setVotingFor(featureId);
+        const result = await voteFeature(featureId);
+        setVoteMessage(result.message);
+        setVotingFor(null);
+
+        // Close modal after 2 seconds
+        setTimeout(() => {
+            setShowVoteModal(false);
+            setVoteMessage('');
+        }, 2000);
+    };
+
+    const handleEmailSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) return;
+
+        setEmailLoading(true);
+        setEmailMessage(null);
+
+        const { signupEmail } = await import('@/lib/analytics');
+        const result = await signupEmail(email, 'landing_page_hero');
+
+        setEmailLoading(false);
+
+        if (result.success) {
+            setEmailMessage({ type: 'success', text: result.message });
+            setEmail('');
+            setTimeout(() => setEmailMessage(null), 5000);
+        } else {
+            setEmailMessage({ type: 'error', text: result.message });
+        }
+    };
+
+    const lockedFeatures = features.filter(f => !f.unlocked);
 
     return (
         <main className="min-h-screen">
@@ -169,6 +214,46 @@ export default function Home() {
                                 See Demo Video
                             </motion.button>
                         </div>
+
+                        {/* Email Signup Section */}
+                        <motion.div
+                            className="max-w-md mx-auto mb-8"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                        >
+                            <p className="text-sm text-gray-400 mb-3 text-center">
+                                Get early access and exclusive WhatsApp marketing tips 🚀
+                            </p>
+                            <form onSubmit={handleEmailSignup} className="flex gap-2">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter your email"
+                                    className="flex-1 px-4 py-3 rounded-lg bg-black/50 border border-gray-700 focus:border-cyan-400 focus:outline-none text-white placeholder-gray-500"
+                                    required
+                                    disabled={emailLoading}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={emailLoading}
+                                    className="btn-primary px-6 py-3 whitespace-nowrap disabled:opacity-50"
+                                >
+                                    {emailLoading ? 'Joining...' : 'Join Waitlist'}
+                                </button>
+                            </form>
+                            {emailMessage && (
+                                <motion.div
+                                    className={`mt-3 text-sm text-center ${emailMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
+                                        }`}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                >
+                                    {emailMessage.text}
+                                </motion.div>
+                            )}
+                        </motion.div>
 
                         {/* Social Proof */}
                         <div className="flex items-center justify-center gap-6 text-sm text-gray-400">
@@ -406,8 +491,10 @@ export default function Home() {
                         <motion.button
                             className="btn-primary px-6 py-3"
                             whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowVoteModal(true)}
                         >
-                            Vote Now (Coming Soon)
+                            Vote Now
                         </motion.button>
                     </motion.div>
                 </div>
@@ -585,6 +672,81 @@ export default function Home() {
                     </Link>
                 </motion.div>
             </section>
+
+            {/* Feature Voting Modal */}
+            <AnimatePresence>
+                {showVoteModal && (
+                    <motion.div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowVoteModal(false)}
+                    >
+                        <motion.div
+                            className="glass-dark p-8 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-3xl font-bold">Vote for Next Feature</h2>
+                                <button
+                                    onClick={() => setShowVoteModal(false)}
+                                    className="glass p-2 rounded-lg hover-glow"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <p className="text-gray-400 mb-6">
+                                We unlock features based on customer demand. Vote for the feature YOU want to see next!
+                            </p>
+
+                            {voteMessage && (
+                                <motion.div
+                                    className="mb-6 p-4 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400"
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                >
+                                    {voteMessage}
+                                </motion.div>
+                            )}
+
+                            <div className="space-y-4">
+                                {lockedFeatures.map((feature) => {
+                                    const Icon = feature.icon;
+                                    const featureId = feature.name.toLowerCase().replace(/\s+/g, '_');
+                                    const isVoting = votingFor === featureId;
+
+                                    return (
+                                        <motion.button
+                                            key={feature.id}
+                                            className="w-full glass p-4 rounded-xl text-left hover-glow transition-all disabled:opacity-50"
+                                            whileHover={{ scale: isVoting ? 1 : 1.02 }}
+                                            whileTap={{ scale: isVoting ? 1 : 0.98 }}
+                                            onClick={() => handleVote(featureId)}
+                                            disabled={isVoting || !!voteMessage}
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <Icon className={`w-8 h-8 ${feature.iconColor} flex-shrink-0`} />
+                                                <div className="flex-1">
+                                                    <h3 className="text-lg font-bold mb-1">{feature.name}</h3>
+                                                    <p className="text-sm text-gray-400">{feature.description}</p>
+                                                </div>
+                                                {isVoting && (
+                                                    <div className="text-cyan-400 text-sm">Voting...</div>
+                                                )}
+                                            </div>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </main>
     );
 }

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: technoaiamaze-api
+    runtime: python
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: ANALYTICS_ADMIN_PASSWORD
+        value: technoaiamaze2026
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DEBUG
+        value: false
+      - key: USE_EDGE_TTS
+        value: true
+      - key: USE_COQUI_TTS
+        value: false
+    disk:
+      name: analytics-data
+      mountPath: /opt/render/project/src/server
+      sizeGB: 1

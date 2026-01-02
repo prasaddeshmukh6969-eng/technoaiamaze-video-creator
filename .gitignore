@@ -65,3 +65,7 @@ client/tsconfig.tsbuildinfo
 
 # Build artifacts
 client/.htaccess-hostinger
+
+# Analytics data (sensitive user information)
+server/analytics_data.json
+analytics_data.json
